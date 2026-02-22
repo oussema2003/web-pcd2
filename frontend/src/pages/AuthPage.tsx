@@ -33,8 +33,9 @@ export default function AuthPage() {
         toast.success("Compte créé avec succès !");
       }
       navigate("/dashboard");
-    } catch (error: any) {
-      toast.error(error.message || "Une erreur est survenue");
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Une erreur est survenue";
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }

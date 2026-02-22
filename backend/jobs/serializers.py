@@ -2,6 +2,8 @@ from rest_framework import serializers
 
 from accounts.serializers import UserSerializer
 from .models import Candidature, Offre
+from .models import OffreQuestion
+import json
 
 
 class OffreSerializer(serializers.ModelSerializer):
@@ -10,11 +12,18 @@ class OffreSerializer(serializers.ModelSerializer):
         fields = ["id", "titre", "description", "localisation", "salaire", "date_creation"]
 
 
+class OffreQuestionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = OffreQuestion
+        fields = ["id", "text", "required", "input_type", "order"]
+
+
 class OffreDetailSerializer(OffreSerializer):
     has_applied = serializers.SerializerMethodField()
+    questions = OffreQuestionSerializer(many=True, read_only=True)
 
     class Meta(OffreSerializer.Meta):
-        fields = OffreSerializer.Meta.fields + ["has_applied"]
+        fields = OffreSerializer.Meta.fields + ["has_applied", "questions"]
 
     def get_has_applied(self, obj: Offre) -> bool:
         request = self.context.get("request")
@@ -26,18 +35,20 @@ class OffreDetailSerializer(OffreSerializer):
 
 class CandidatureForCandidateSerializer(serializers.ModelSerializer):
     offre = OffreSerializer()
+    answers = serializers.JSONField(required=False)
 
     class Meta:
         model = Candidature
-        fields = ["id", "offre", "date_postulation", "statut"]
+        fields = ["id", "offre", "date_postulation", "statut", "nom", "prenom", "email", "telephone", "cv", "video"]
 
 
 class CandidatureForRecruiterSerializer(serializers.ModelSerializer):
     candidat = UserSerializer()
+    answers = serializers.JSONField(required=False)
 
     class Meta:
         model = Candidature
-        fields = ["id", "candidat", "offre", "date_postulation", "statut"]
+        fields = ["id", "candidat", "offre", "date_postulation", "statut", "nom", "prenom", "email", "telephone", "cv", "video"]
 
 
 class CandidatureStatusUpdateSerializer(serializers.ModelSerializer):

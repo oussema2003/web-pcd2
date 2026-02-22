@@ -29,6 +29,18 @@ class Candidature(models.Model):
     candidat = models.ForeignKey(User, related_name="candidatures", on_delete=models.CASCADE)
     date_postulation = models.DateTimeField(auto_now_add=True)
     statut = models.CharField(max_length=20, choices=Statut.choices, default=Statut.EN_ATTENTE)
+    
+    # Personal Information
+    nom = models.CharField(max_length=255, null=True, blank=True)
+    prenom = models.CharField(max_length=255, null=True, blank=True)
+    email = models.EmailField(null=True, blank=True)
+    telephone = models.CharField(max_length=20, null=True, blank=True)
+    
+    # Files
+    cv = models.FileField(upload_to="candidatures/cv/", null=True, blank=True)
+    video = models.FileField(upload_to="candidatures/video/", null=True, blank=True)
+    # Store answers to dynamic application questions as JSON: { question_id: answer }
+    answers = models.JSONField(null=True, blank=True)
 
     class Meta:
         unique_together = ("offre", "candidat")
@@ -36,4 +48,23 @@ class Candidature(models.Model):
 
     def __str__(self) -> str:  # pragma: no cover - trivial
         return f"{self.candidat} -> {self.offre}"
+
+
+class OffreQuestion(models.Model):
+    class InputType(models.TextChoices):
+        TEXT = "text", "Texte"
+        TEXTAREA = "textarea", "Paragraphe"
+        FILE = "file", "Fichier"
+
+    offre = models.ForeignKey(Offre, related_name="questions", on_delete=models.CASCADE)
+    text = models.CharField(max_length=1024)
+    required = models.BooleanField(default=False)
+    input_type = models.CharField(max_length=20, choices=InputType.choices, default=InputType.TEXT)
+    order = models.IntegerField(default=0)
+
+    class Meta:
+        ordering = ["order"]
+
+    def __str__(self) -> str:  # pragma: no cover - trivial
+        return f"Question for {self.offre}: {self.text[:50]}"
 

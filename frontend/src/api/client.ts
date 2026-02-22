@@ -51,8 +51,10 @@ async function refreshAccessToken(): Promise<string | null> {
 export async function apiFetch<T = any>(path: string, options: RequestInit = {}): Promise<T> {
   const url = `${API_URL}${path}`;
 
+  const isFormData = options.body instanceof FormData;
+
   const headers: HeadersInit = {
-    "Content-Type": "application/json",
+    ...(isFormData ? {} : { "Content-Type": "application/json" }),
     ...(options.headers || {}),
   };
 
@@ -105,7 +107,34 @@ export async function apiFetch<T = any>(path: string, options: RequestInit = {})
   }
 
   if (!response.ok) {
-    const message = data?.detail || data?.error || "Une erreur est survenue";
+    // Build a helpful error message from common DRF response shapes:
+    // - { detail: '...' }
+    // - { error: '...' }
+    // - { field: ['err1', 'err2'], other: ['err'] }
+    // - ['err1', 'err2']
+    let message = "Une erreur est survenue";
+    if (data) {
+      if (typeof data === "string") {
+        message = data;
+      } else if (Array.isArray(data)) {
+        message = data.join(" ");
+      } else if (data.detail || data.error) {
+        message = data.detail || data.error;
+      } else if (typeof data === "object") {
+        // concatenate field errors into a single string
+        const parts: string[] = [];
+        for (const [key, val] of Object.entries(data)) {
+          if (Array.isArray(val)) {
+            parts.push(`${key}: ${val.join(" ")}`);
+          } else if (typeof val === "string") {
+            parts.push(`${key}: ${val}`);
+          } else {
+            parts.push(`${key}: ${JSON.stringify(val)}`);
+          }
+        }
+        if (parts.length) message = parts.join(" | ");
+      }
+    }
     throw new Error(message);
   }
 
