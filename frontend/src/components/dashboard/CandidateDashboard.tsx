@@ -22,16 +22,29 @@ interface CandidatureWithOffre {
 }
 
 export default function CandidateDashboard() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [candidatures, setCandidatures] = useState<CandidatureWithOffre[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetch = async () => {
-      if (!user) return;
-      const data = await apiFetch<CandidatureWithOffre[]>("/candidatures/me/");
-      setCandidatures(data || []);
-      setLoading(false);
+      if (authLoading) return;
+      if (!user) {
+        setCandidatures([]);
+        setLoading(false);
+        return;
+      }
+      try {
+        setError(null);
+        const data = await apiFetch<CandidatureWithOffre[]>("/candidatures/me/");
+        setCandidatures(data || []);
+      } catch (err: any) {
+        setError(err?.message || "Erreur lors de la récupération des candidatures.");
+        setCandidatures([]);
+      } finally {
+        setLoading(false);
+      }
     };
     fetch();
   }, [user]);
@@ -51,6 +64,58 @@ export default function CandidateDashboard() {
     acceptee: candidatures.filter((c) => c.statut === "acceptee").length,
     refusee: candidatures.filter((c) => c.statut === "refusee").length,
   };
+
+  // Render list content with explicit branches to avoid nested JSX ternary parsing issues
+  let listContent: JSX.Element;
+  if (loading) {
+    listContent = (
+      <div className="flex justify-center py-10">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      </div>
+    );
+  } else if (candidatures.length === 0) {
+    listContent = error ? (
+      <Card>
+        <CardContent className="py-16 text-center">
+          <p className="text-destructive text-lg">{error}</p>
+          <p className="text-muted-foreground text-sm mt-1">Vérifiez que le backend est démarré et reconnectez-vous.</p>
+        </CardContent>
+      </Card>
+    ) : (
+      <Card>
+        <CardContent className="py-16 text-center">
+          <FileText className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
+          <p className="text-muted-foreground text-lg">Aucune candidature pour le moment.</p>
+          <p className="text-muted-foreground text-sm mt-1">Parcourez les offres pour postuler.</p>
+        </CardContent>
+      </Card>
+    );
+  } else {
+    listContent = (
+      <div className="space-y-3">
+        {candidatures.map((c) => {
+          const config = statutConfig[c.statut];
+          const Icon = config.icon;
+          return (
+            <Card key={c.id} className="hover:shadow-sm transition-all">
+              <CardContent className="p-5 flex items-center justify-between">
+                <div>
+                  <p className="font-medium text-foreground">{c.offre?.titre || "Offre"}</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {c.offre?.localisation} • Postulé le {new Date(c.date_postulation).toLocaleDateString("fr-FR")}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Icon className={`h-4 w-4 ${config.color}`} />
+                  <Badge variant={config.variant}>{config.label}</Badge>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -108,42 +173,7 @@ export default function CandidateDashboard() {
       </div>
 
       {/* List */}
-      {loading ? (
-        <div className="flex justify-center py-10">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-        </div>
-      ) : candidatures.length === 0 ? (
-        <Card>
-          <CardContent className="py-16 text-center">
-            <FileText className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
-            <p className="text-muted-foreground text-lg">Aucune candidature pour le moment.</p>
-            <p className="text-muted-foreground text-sm mt-1">Parcourez les offres pour postuler.</p>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="space-y-3">
-          {candidatures.map((c) => {
-            const config = statutConfig[c.statut];
-            const Icon = config.icon;
-            return (
-              <Card key={c.id} className="hover:shadow-sm transition-all">
-                <CardContent className="p-5 flex items-center justify-between">
-                  <div>
-                    <p className="font-medium text-foreground">{c.offres?.titre || "Offre"}</p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {c.offres?.localisation} • Postulé le {new Date(c.date_postulation).toLocaleDateString("fr-FR")}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Icon className={`h-4 w-4 ${config.color}`} />
-                    <Badge variant={config.variant}>{config.label}</Badge>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-      )}
+      {listContent}
     </div>
   );
 }

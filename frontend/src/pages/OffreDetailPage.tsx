@@ -28,6 +28,16 @@ interface OffreDetail {
   questions?: Array<{ id: number; text: string; required: boolean; input_type: string }>;
 }
 
+interface FormState {
+  nom: string;
+  prenom: string;
+  email: string;
+  telephone: string;
+  cv: File | null;
+  video: File | null;
+  answers: Record<number, string>;
+}
+
 export default function OffreDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { user, role } = useAuth();
@@ -37,14 +47,14 @@ export default function OffreDetailPage() {
   const [loading, setLoading] = useState(true);
   const [applying, setApplying] = useState(false);
   const [showForm, setShowForm] = useState(false);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormState>({
     nom: "",
     prenom: "",
     email: "",
     telephone: "",
-    cv: null as File | null,
-    video: null as File | null,
-    answers: {} as Record<number, string>
+    cv: null,
+    video: null,
+    answers: {},
   });
   const [fileNames, setFileNames] = useState({
     cv: "",
@@ -75,7 +85,7 @@ export default function OffreDetailPage() {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name as keyof FormState]: value } as FormState));
   };
 
   const handleFileChange = (
@@ -84,7 +94,7 @@ export default function OffreDetailPage() {
   ) => {
     const file = e.target.files?.[0];
     if (file) {
-      setFormData((prev) => ({ ...prev, [fileType]: file }));
+      setFormData((prev) => ({ ...prev, [fileType]: file } as FormState));
       setFileNames((prev) => ({ ...prev, [fileType]: file.name }));
     }
   };
@@ -144,6 +154,7 @@ export default function OffreDetailPage() {
         telephone: "",
         cv: null,
         video: null,
+        answers: {},
       });
       setFileNames({ cv: "", video: "" });
     } catch (error: Error | unknown) {
