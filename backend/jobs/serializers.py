@@ -39,7 +39,7 @@ class CandidatureForCandidateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Candidature
-        fields = ["id", "offre", "date_postulation", "statut", "nom", "prenom", "email", "telephone", "cv", "video"]
+        fields = ["id", "offre", "date_postulation", "statut", "nom", "prenom", "email", "telephone", "cv", "video", "answers"]
 
 
 class CandidatureForRecruiterSerializer(serializers.ModelSerializer):
@@ -48,7 +48,7 @@ class CandidatureForRecruiterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Candidature
-        fields = ["id", "candidat", "offre", "date_postulation", "statut", "nom", "prenom", "email", "telephone", "cv", "video"]
+        fields = ["id", "candidat", "offre", "date_postulation", "statut", "nom", "prenom", "email", "telephone", "cv", "video", "answers"]
 
 
 class CandidatureStatusUpdateSerializer(serializers.ModelSerializer):
