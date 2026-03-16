@@ -2,7 +2,16 @@ import os
 from pathlib import Path
 
 from datetime import timedelta
+import os
 
+# Clé API AssemblyAI pour la transcription.
+# Pour un vrai déploiement, remplace la valeur par défaut par une variable
+# d'environnement uniquement. Ici, on laisse une valeur par défaut pour
+# simplifier le développement local.
+ASSEMBLYAI_API_KEY = os.environ.get(
+    "ASSEMBLYAI_API_KEY",
+    "d84f4ea59b314c6daebdd3cbcda920df",
+)
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "dev-secret-key-change-me")

@@ -39,6 +39,14 @@ class Candidature(models.Model):
     # Files
     cv = models.FileField(upload_to="candidatures/cv/", null=True, blank=True)
     video = models.FileField(upload_to="candidatures/video/", null=True, blank=True)
+    # Audio-only version (extrait automatiquement depuis la vidéo)
+    audio = models.FileField(upload_to="candidatures/audio/", null=True, blank=True)
+    # Transcription texte brute (optionnelle, non affichée dans l'admin)
+    transcription = models.TextField(null=True, blank=True)
+    # Fichier texte contenant la transcription (lien cliquable dans l'admin)
+    transcription_file = models.FileField(
+        upload_to="candidatures/transcriptions/", null=True, blank=True
+    )
     # Store answers to dynamic application questions as JSON: { question_id: answer }
     answers = models.JSONField(null=True, blank=True)
 

@@ -1,4 +1,8 @@
 from django.shortcuts import get_object_or_404
+from django.core.files import File
+from django.core.files.base import ContentFile
+from django.core.files.storage import default_storage
+from django.conf import settings
 from rest_framework import permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -7,6 +11,10 @@ from accounts.models import User
 from .models import Candidature, Offre
 from .models import OffreQuestion
 import json
+import os
+import time
+import requests
+from moviepy.editor import VideoFileClip
 from .serializers import (
     CandidatureForCandidateSerializer,
     CandidatureForRecruiterSerializer,
@@ -139,6 +147,116 @@ class OffreDetailView(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
+def generate_transcription_for_candidature(candidature: Candidature) -> None:
+    """
+    Envoie le fichier audio de la candidature à AssemblyAI pour produire
+    une transcription texte et la stocker dans `transcription` + un fichier .txt.
+    Cette fonction est appelée de manière synchrone après la création.
+    """
+    api_key = getattr(settings, "ASSEMBLYAI_API_KEY", None)
+    if not api_key:
+        print("[assemblyai] Aucune clé API configurée, transcription ignorée.")
+        return
+    if not candidature.audio:
+        return
+
+    audio_path = candidature.audio.path
+
+    headers = {
+        "authorization": api_key,
+        "content-type": "application/json",
+    }
+
+    # 1) Upload du fichier audio
+    upload_url = "https://api.assemblyai.com/v2/upload"
+    try:
+        with open(audio_path, "rb") as f:
+            upload_resp = requests.post(
+                upload_url, headers={"authorization": api_key}, data=f, timeout=60
+            )
+    except Exception as e:
+        print(f"[assemblyai] Erreur lors de l'upload audio: {e}")
+        return
+
+    if upload_resp.status_code != 200:
+        print(f"[assemblyai] Upload refusé: {upload_resp.status_code} {upload_resp.text}")
+        return
+
+    audio_url = upload_resp.json().get("upload_url")
+    if not audio_url:
+        print("[assemblyai] URL d'upload manquante dans la réponse.")
+        return
+
+    # 2) Création de la demande de transcription
+    transcript_request = {
+        "audio_url": audio_url,
+        "language_code": "fr",
+        "speech_models": ["universal-3-pro"],
+    }
+
+    try:
+        create_resp = requests.post(
+            "https://api.assemblyai.com/v2/transcript",
+            json=transcript_request,
+            headers=headers,
+            timeout=30,
+        )
+    except Exception as e:
+        print(f"[assemblyai] Erreur lors de la création de la transcription: {e}")
+        return
+
+    if create_resp.status_code not in (200, 201):
+        print(f"[assemblyai] Création de transcription refusée: {create_resp.status_code} {create_resp.text}")
+        return
+
+    transcript_id = create_resp.json().get("id")
+    if not transcript_id:
+        print("[assemblyai] ID de transcription manquant dans la réponse.")
+        return
+
+    # 3) Polling jusqu'à complétion (limite de temps raisonnable)
+    status_value = ""
+    transcript_text = None
+    for _ in range(20):  # ~20 * 3s = 60s max
+        try:
+            status_resp = requests.get(
+                f"https://api.assemblyai.com/v2/transcript/{transcript_id}",
+                headers=headers,
+                timeout=15,
+            )
+        except Exception as e:
+            print(f"[assemblyai] Erreur lors de la récupération du statut: {e}")
+            return
+
+        if status_resp.status_code != 200:
+            print(f"[assemblyai] Statut refusé: {status_resp.status_code} {status_resp.text}")
+            return
+
+        body = status_resp.json()
+        status_value = body.get("status")
+
+        if status_value == "completed":
+            transcript_text = body.get("text") or ""
+            break
+        if status_value == "error":
+            print(f"[assemblyai] Erreur transcription: {body.get('error')}")
+            return
+
+        time.sleep(3)
+
+    if transcript_text:
+        candidature.transcription = transcript_text
+
+        # Enregistrer aussi la transcription dans un fichier .txt
+        base_name = os.path.splitext(os.path.basename(audio_path))[0]
+        rel_path = f"candidatures/transcriptions/{base_name}.txt"
+        file_content = ContentFile(transcript_text.encode("utf-8"))
+        saved_path = default_storage.save(rel_path, file_content)
+
+        candidature.transcription_file.name = saved_path
+        candidature.save(update_fields=["audio", "transcription", "transcription_file", "answers"])
+
+
 class ApplyOffreView(APIView):
     permission_classes = [permissions.IsAuthenticated, IsCandidate]
 
@@ -184,13 +302,38 @@ class ApplyOffreView(APIView):
             email=email,
             telephone=telephone,
             cv=cv,
-            video=video
+            video=video,
         )
 
-        # Save answers if provided
+        # Convert video to MP3 and store alongside it
+        if candidature.video:
+            try:
+                video_path = candidature.video.path
+                base, _ = os.path.splitext(video_path)
+                audio_path = base + ".mp3"
+
+                # Extract audio track to MP3 using moviepy
+                with VideoFileClip(video_path) as clip:
+                    if clip.audio is not None:
+                        clip.audio.write_audiofile(audio_path, codec="mp3")
+
+                        # Attach generated MP3 file to the candidature.audio field
+                        with open(audio_path, "rb") as f:
+                            candidature.audio.save(os.path.basename(audio_path), File(f), save=False)
+                    else:
+                        print(f"[moviepy] Aucun flux audio dans la vidéo: {video_path}")
+            except Exception as e:
+                # Log the error so we pouvons diagnostiquer le problème
+                print(f"[moviepy] Erreur lors de la conversion vidéo->MP3 pour {video_path}: {e}")
+
+        # Save answers if provided, then persist any audio field updates
         if answers:
             candidature.answers = answers
-            candidature.save()
+
+        candidature.save()
+
+        # Optionally generate a transcription of the audio track
+        generate_transcription_for_candidature(candidature)
         
         return Response(
             CandidatureForCandidateSerializer(candidature).data,

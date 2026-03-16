@@ -37,7 +37,9 @@ class CandidatureAdmin(admin.ModelAdmin):
             "fields": ("prenom", "nom", "email", "telephone")
         }),
         ("Documents", {
-            "fields": ("cv", "video")
+            # On affiche le lien vers le MP3 et vers le .txt,
+            # pas le gros contenu texte brut.
+            "fields": ("cv", "video", "audio", "transcription_file")
         }),
         ("Dates", {
             "fields": ("date_postulation",)

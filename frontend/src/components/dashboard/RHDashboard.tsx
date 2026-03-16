@@ -137,6 +137,12 @@ export default function RHDashboard() {
     try {
       const data = await apiFetch<Offre[]>("/offres/mine/");
       setOffres(data || []);
+
+      // Pré‑sélectionner automatiquement la première offre pour afficher
+      // directement ses candidatures sans que le recruteur doive cliquer.
+      if (data && data.length > 0 && !selectedOffre) {
+        setSelectedOffre(data[0].id);
+      }
     } catch (error: any) {
       toast.error(error.message || "Erreur lors du chargement des offres");
     } finally {
