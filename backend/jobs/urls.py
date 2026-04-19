@@ -2,6 +2,7 @@ from django.urls import path
 
 from .views import (
     ApplyOffreView,
+    CandidatureAIAnalysisView,
     CandidatureStatusUpdateView,
     MyCandidaturesView,
     MyOffresView,
@@ -17,6 +18,7 @@ urlpatterns = [
     path("offres/<int:pk>/postuler/", ApplyOffreView.as_view(), name="offres-apply"),
     path("offres/<int:pk>/candidatures/", OffreCandidaturesView.as_view(), name="offres-candidatures"),
     path("candidatures/me/", MyCandidaturesView.as_view(), name="candidatures-me"),
+    path("candidatures/<int:pk>/analyse-ia/", CandidatureAIAnalysisView.as_view(), name="candidatures-ai-analysis"),
     path("candidatures/<int:pk>/", CandidatureStatusUpdateView.as_view(), name="candidatures-update"),
 ]
 

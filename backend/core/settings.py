@@ -1,8 +1,44 @@
 import os
+from datetime import timedelta
 from pathlib import Path
 
-from datetime import timedelta
-import os
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+
+def _load_env_file(path: Path) -> None:
+    """Charge KEY=value depuis un fichier .env sans écraser les variables déjà définies."""
+    if not path.is_file():
+        return
+    try:
+        text = path.read_text(encoding="utf-8")
+    except OSError:
+        return
+    for line in text.splitlines():
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
+        if "=" not in line:
+            continue
+        key, _, value = line.partition("=")
+        key = key.strip()
+        if not key or key in os.environ:
+            continue
+        value = value.strip()
+        if len(value) >= 2 and value[0] == value[-1] and value[0] in "\"'":
+            value = value[1:-1]
+        os.environ[key] = value
+
+
+def _load_dotenv_compat(path: Path) -> None:
+    try:
+        from dotenv import load_dotenv
+
+        load_dotenv(path)
+    except ImportError:
+        _load_env_file(path)
+
+
+_load_dotenv_compat(BASE_DIR / ".env")
 
 # Clé API AssemblyAI pour la transcription.
 # Pour un vrai déploiement, remplace la valeur par défaut par une variable
@@ -12,7 +48,10 @@ ASSEMBLYAI_API_KEY = os.environ.get(
     "ASSEMBLYAI_API_KEY",
     "d84f4ea59b314c6daebdd3cbcda920df",
 )
-BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Clé API Groq : fichier backend/.env (GROQ_API_KEY=...) ou variable d’environnement. Ne pas committer .env.
+GROQ_API_KEY = (os.environ.get("GROQ_API_KEY") or "").strip()
+GROQ_MODEL = os.environ.get("GROQ_MODEL", "llama-3.3-70b-versatile").strip()
 
 SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "dev-secret-key-change-me")
 

@@ -1,1 +1,22 @@
-les fonctionnalités sont géniales. Vous pouvez obtenir une analyse des sentiments, un résumé de contenu, une détection de sujets, une détection d'entités et bien plus encore. Et tout cela peut être obtenu avec quelques appels d'API simples. Maintenant, l'inconvénient, c'est qu'à ce jour, AssemblyAI ne prend en charge que la transcription en anglais, mais d'autres modèles linguistiques seront bientôt disponibles, et le reste des cas sont encore un peu limités. Mais leur API est si facile à utiliser qu'elle permet une configuration rapide avec des bibliothèques HTTP natives dans n'importe quel langage de programmation. Donc, parmi toutes les options de cette vidéo, je pense que c'est la plus facile à configurer. Et la dernière option d'API que je veux vous montrer est le service AWS Transcribe. Le niveau gratuit offre une heure gratuite par mois pendant les 12 premiers mois d'utilisation. Les tarifs peuvent varier en fonction des différentes options, mais dans la première catégorie, ils sont par exemple de 0,024 par minute, soit 0,004
+1. Comprendre le décalage : La technique n'est qu'un moyen
+Le recruteur dans le secteur de l'environnement cherche avant tout un collaborateur qui comprend sa mission. En parlant immédiatement de "services de transcription" et "d'API" de manière abstraite, vous l'avez perdu. Pour lui, le code ou l'intelligence artificielle n'ont aucune valeur s'ils ne servent pas à réduire les émissions de carbone, à optimiser les transports en commun ou à sécuriser les déplacements à vélo. La solution consiste à créer un "pont" sémantique et stratégique entre votre savoir-faire informatique et leurs objectifs écologiques.
+
+2. La stratégie de la "Traduction" : Lier vos outils à la mobilité
+Vos compétences actuelles sont tout à fait valables, il faut simplement les "traduire" dans le langage de l'employeur. Voici comment repenser vos arguments :
+
+Pour les API (Interfaces de programmation) : Ne dites plus simplement "Je sais développer et intégrer des API". Dites plutôt : "Je conçois des API capables de connecter votre application de mobilité aux données de trafic et de pollution en temps réel, permettant ainsi aux usagers de choisir l'itinéraire le moins polluant."
+
+Pour la transcription (Reconnaissance vocale) : Ne parlez plus de transcription de texte hors contexte. Expliquez : "Mon expertise en transcription vocale peut être utilisée pour créer des commandes 'mains libres' sécurisées. Un cycliste ou un conducteur en covoiturage pourrait ainsi interagir avec votre application de navigation sans quitter la route des yeux, renforçant la sécurité de la mobilité douce."
+
+Pour l'architecture logicielle : Reliez vos compétences à l'empreinte carbone. "Mes solutions logicielles sont optimisées pour consommer peu d'énergie (Green IT), ce qui est en parfaite adéquation avec vos valeurs environnementales."
+
+3. La structure idéale pour votre nouvelle approche
+Pour que votre profil passe de 5/100 à une note d'excellence, votre présentation doit systématiquement suivre cette architecture en trois étapes :
+
+L'Accroche (Orientée Mission) : Commencez toujours par leur enjeu. "Votre mission pour décarboner la mobilité urbaine et repenser nos déplacements quotidiens résonne avec mes convictions professionnelles."
+
+La Proposition de Valeur (Le Pont) : Faites le lien. "Pour relever ce défi écologique, la technologie est un levier puissant pour changer les habitudes des usagers. C'est ici que mon profil technique intervient."
+
+L'Expertise Technique (Adaptée) : Déployez ensuite vos arguments sur les API et la transcription vocale, mais uniquement en utilisant les exemples d'application concrets liés à la mobilité cités plus haut.
+
+En adoptant cette nouvelle posture, vous ne serez plus perçu comme un simple technicien hors de son élément, mais comme un expert qui a compris comment mettre l'innovation technologique au service direct de la transition écologique
