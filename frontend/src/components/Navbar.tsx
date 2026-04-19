@@ -13,6 +13,7 @@ export default function Navbar() {
     await signOut();
     navigate("/");
   };
+  const roleLabel = role === "rh" ? "Recruteur" : role === "admin" ? "Admin" : "Candidat";
 
   return (
     <nav className="sticky top-0 z-50 border-b border-border/60 bg-background/80 backdrop-blur-lg">
@@ -39,7 +40,7 @@ export default function Navbar() {
               </Link>
               <div className="flex items-center gap-2 ml-2 pl-4 border-l border-border">
                 <span className="text-xs font-medium px-2 py-1 rounded-full bg-primary/10 text-primary">
-                  {role === "rh" ? "Recruteur" : "Candidat"}
+                  {roleLabel}
                 </span>
                 <Button variant="ghost" size="sm" onClick={handleSignOut}>
                   <LogOut className="h-4 w-4" />

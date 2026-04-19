@@ -16,7 +16,7 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-10">
-        {role === "rh" ? <RHDashboard /> : <CandidateDashboard />}
+        {role === "rh" || role === "admin" ? <RHDashboard /> : <CandidateDashboard />}
       </div>
     </div>
   );

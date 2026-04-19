@@ -1,6 +1,6 @@
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
 
-export type AppRole = "rh" | "candidate";
+export type AppRole = "rh" | "candidate" | "admin";
 
 export interface AuthUser {
   id: number;

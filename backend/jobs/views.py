@@ -89,7 +89,15 @@ def _transcription_texte_video_uniquement(candidature: Candidature) -> str:
 
 class IsRecruiter(permissions.BasePermission):
     def has_permission(self, request, view):
-        return bool(request.user and request.user.is_authenticated and request.user.role == User.Roles.RH)
+        return bool(
+            request.user
+            and request.user.is_authenticated
+            and request.user.role in [User.Roles.RH, User.Roles.ADMIN]
+        )
+
+
+def _is_admin(user) -> bool:
+    return bool(user and user.is_authenticated and user.role == User.Roles.ADMIN)
 
 
 class IsCandidate(permissions.BasePermission):
@@ -119,7 +127,10 @@ class MyOffresView(APIView):
     permission_classes = [permissions.IsAuthenticated, IsRecruiter]
 
     def get(self, request):
-        offres = Offre.objects.filter(created_by=request.user)
+        if _is_admin(request.user):
+            offres = Offre.objects.all()
+        else:
+            offres = Offre.objects.filter(created_by=request.user)
         return Response(OffreSerializer(offres, many=True).data)
 
     def post(self, request):
@@ -169,10 +180,10 @@ class OffreDetailView(APIView):
             return Response(basic.data)
 
     def put(self, request, pk: int):
-        if not request.user.is_authenticated or request.user.role != User.Roles.RH:
+        if not request.user.is_authenticated or request.user.role not in [User.Roles.RH, User.Roles.ADMIN]:
             return Response({"detail": "Accès refusé."}, status=status.HTTP_403_FORBIDDEN)
         offre = self.get_object(pk)
-        if offre.created_by != request.user:
+        if not _is_admin(request.user) and offre.created_by != request.user:
             return Response({"detail": "Vous n'êtes pas le créateur de cette offre."}, status=status.HTTP_403_FORBIDDEN)
         serializer = OffreSerializer(offre, data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -201,10 +212,10 @@ class OffreDetailView(APIView):
         return Response(OffreDetailSerializer(offre, context={"request": request}).data)
 
     def delete(self, request, pk: int):
-        if not request.user.is_authenticated or request.user.role != User.Roles.RH:
+        if not request.user.is_authenticated or request.user.role not in [User.Roles.RH, User.Roles.ADMIN]:
             return Response({"detail": "Accès refusé."}, status=status.HTTP_403_FORBIDDEN)
         offre = self.get_object(pk)
-        if offre.created_by != request.user:
+        if not _is_admin(request.user) and offre.created_by != request.user:
             return Response({"detail": "Vous n'êtes pas le créateur de cette offre."}, status=status.HTTP_403_FORBIDDEN)
         offre.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -421,7 +432,10 @@ class OffreCandidaturesView(APIView):
     permission_classes = [permissions.IsAuthenticated, IsRecruiter]
 
     def get(self, request, pk: int):
-        offre = get_object_or_404(Offre, pk=pk, created_by=request.user)
+        if _is_admin(request.user):
+            offre = get_object_or_404(Offre, pk=pk)
+        else:
+            offre = get_object_or_404(Offre, pk=pk, created_by=request.user)
         candidatures = offre.candidatures.select_related("candidat")
         serializer = CandidatureForRecruiterSerializer(candidatures, many=True)
         return Response(serializer.data)
@@ -432,7 +446,7 @@ class CandidatureStatusUpdateView(APIView):
 
     def patch(self, request, pk: int):
         candidature = get_object_or_404(Candidature, pk=pk)
-        if candidature.offre.created_by != request.user:
+        if not _is_admin(request.user) and candidature.offre.created_by != request.user:
             return Response({"detail": "Accès refusé."}, status=status.HTTP_403_FORBIDDEN)
         serializer = CandidatureStatusUpdateSerializer(candidature, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
@@ -453,7 +467,7 @@ class CandidatureAIAnalysisView(APIView):
         candidature = get_object_or_404(
             Candidature.objects.select_related("offre"), pk=pk
         )
-        if candidature.offre.created_by != request.user:
+        if not _is_admin(request.user) and candidature.offre.created_by != request.user:
             return Response({"detail": "Accès refusé."}, status=status.HTTP_403_FORBIDDEN)
 
         if not candidature.audio:

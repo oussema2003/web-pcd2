@@ -41,17 +41,42 @@ class MeView(APIView):
 
 class CandidatesListView(APIView):
     """
-    Liste tous les utilisateurs ayant le rôle candidat.
-    Accessible uniquement aux RH.
+    Liste des utilisateurs RH/candidats pour l'administration.
+    - RH: ne voit que les candidats
+    - Admin: voit RH + candidats
     """
 
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
-        if request.user.role != User.Roles.RH:
-            return Response({"detail": "Accès réservé aux recruteurs."}, status=status.HTTP_403_FORBIDDEN)
-        candidates = User.objects.filter(role=User.Roles.CANDIDATE)
-        return Response(UserSerializer(candidates, many=True).data)
+        if request.user.role == User.Roles.ADMIN:
+            users = User.objects.filter(role__in=[User.Roles.RH, User.Roles.CANDIDATE]).order_by("id")
+            return Response(UserSerializer(users, many=True).data)
+        if request.user.role == User.Roles.RH:
+            candidates = User.objects.filter(role=User.Roles.CANDIDATE).order_by("id")
+            return Response(UserSerializer(candidates, many=True).data)
+        return Response(
+            {"detail": "Accès réservé aux recruteurs et administrateurs."},
+            status=status.HTTP_403_FORBIDDEN,
+        )
+
+
+class UsersListView(APIView):
+    """
+    Liste complète des utilisateurs.
+    Accessible uniquement aux administrateurs.
+    """
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        if request.user.role != User.Roles.ADMIN:
+            return Response(
+                {"detail": "Accès réservé aux administrateurs."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        users = User.objects.all().order_by("id")
+        return Response(UserSerializer(users, many=True).data)
 
 
 class LogoutView(APIView):

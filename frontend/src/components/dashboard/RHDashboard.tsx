@@ -160,6 +160,9 @@ export default function RHDashboard() {
   const [form, setForm] = useState({ titre: "", description: "", localisation: "", salaire: "" });
   const [questions, setQuestions] = useState<{ text: string; required?: boolean }[]>([]);
   const [loading, setLoading] = useState(true);
+  const [usersOpen, setUsersOpen] = useState(false);
+  const [usersLoading, setUsersLoading] = useState(false);
+  const [usersList, setUsersList] = useState<{ id: number; username: string; email: string; role: string }[]>([]);
 
   const fetchOffres = async () => {
     if (!user) return;
@@ -316,6 +319,25 @@ export default function RHDashboard() {
     return <Badge variant={s.variant}>{s.label}</Badge>;
   };
 
+  const roleBadgeLabel = (role: string) => {
+    if (role === "admin") return "Admin";
+    if (role === "rh") return "Recruteur";
+    return "Candidat";
+  };
+
+  const loadAllUsers = async () => {
+    setUsersLoading(true);
+    try {
+      const data = await apiFetch<{ id: number; username: string; email: string; role: string }[]>("/auth/users/");
+      setUsersList(data || []);
+      setUsersOpen(true);
+    } catch (error: any) {
+      toast.error(error.message || "Erreur lors du chargement des utilisateurs");
+    } finally {
+      setUsersLoading(false);
+    }
+  };
+
   return (
     <div>
       <div className="flex items-center justify-between mb-8">
@@ -337,6 +359,12 @@ export default function RHDashboard() {
             <OffreForm form={form} setForm={setForm} questions={questions} setQuestions={setQuestions} onSubmit={handleCreate} submitLabel="Créer l'offre" />
           </DialogContent>
         </Dialog>
+        {user?.role === "admin" && (
+          <Button variant="outline" onClick={loadAllUsers} disabled={usersLoading}>
+            <Users className="h-4 w-4 mr-2" />
+            {usersLoading ? "Chargement..." : "Voir tous les utilisateurs"}
+          </Button>
+        )}
       </div>
 
       {/* Stats */}
@@ -714,6 +742,33 @@ export default function RHDashboard() {
             <DialogTitle className="font-display">Modifier l'offre</DialogTitle>
           </DialogHeader>
           <OffreForm form={form} setForm={setForm} questions={questions} setQuestions={setQuestions} onSubmit={handleUpdate} submitLabel="Mettre à jour" />
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={usersOpen} onOpenChange={setUsersOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="font-display">Tous les utilisateurs</DialogTitle>
+          </DialogHeader>
+          <div className="max-h-[60vh] overflow-y-auto space-y-2 pr-1">
+            {usersList.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Aucun utilisateur trouvé.</p>
+            ) : (
+              usersList.map((u) => (
+                <Card key={u.id}>
+                  <CardContent className="p-4 flex items-center justify-between gap-4">
+                    <div>
+                      <p className="font-medium text-foreground">{u.username || "Sans username"}</p>
+                      <p className="text-xs text-muted-foreground">{u.email}</p>
+                    </div>
+                    <Badge variant={u.role === "admin" ? "default" : "outline"}>
+                      {roleBadgeLabel(u.role)}
+                    </Badge>
+                  </CardContent>
+                </Card>
+              ))
+            )}
+          </div>
         </DialogContent>
       </Dialog>
     </div>
