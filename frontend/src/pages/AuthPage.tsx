@@ -54,7 +54,7 @@ export default function AuthPage() {
             <div className="h-10 w-10 rounded-xl bg-primary flex items-center justify-center">
               <Briefcase className="h-5 w-5 text-primary-foreground" />
             </div>
-            <span className="text-2xl font-display font-bold text-foreground">RecruPro</span>
+            <span className="text-2xl font-display font-bold text-foreground">HireBot</span>
           </Link>
         </div>
 

@@ -12,3 +12,6 @@ librosa>=0.10,<1.0
 soundfile>=0.12,<1.0
 numpy>=1.26,<3.0
 groq>=0.4,<1.0
+opencv-python
+timm
+mtcnn

@@ -22,7 +22,7 @@ export default function Navbar() {
           <div className="h-9 w-9 rounded-xl bg-primary flex items-center justify-center">
             <Briefcase className="h-4 w-4 text-primary-foreground" />
           </div>
-          <span className="text-xl font-display font-bold text-foreground">RecruPro</span>
+          <span className="text-xl font-display font-bold text-foreground">HireBot</span>
         </Link>
 
         {/* Desktop */}

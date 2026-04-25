@@ -145,6 +145,17 @@ interface AIAnalysisPayload {
   };
 }
 
+interface DeepfakeAnalysisResult {
+  status: "Fake" | "Real";
+  confidence_score: number;
+  fake_score: number;
+  sequences_analyzed: number;
+  votes: {
+    fake: number;
+    real: number;
+  };
+}
+
 export default function RHDashboard() {
   const { user } = useAuth();
   const [offres, setOffres] = useState<Offre[]>([]);
@@ -155,6 +166,9 @@ export default function RHDashboard() {
   const [aiAnalysis, setAiAnalysis] = useState<AIAnalysisPayload | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
+  const [deepfakeLoading, setDeepfakeLoading] = useState(false);
+  const [deepfakeError, setDeepfakeError] = useState<string | null>(null);
+  const [deepfakeResult, setDeepfakeResult] = useState<DeepfakeAnalysisResult | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [editingOffre, setEditingOffre] = useState<Offre | null>(null);
   const [form, setForm] = useState({ titre: "", description: "", localisation: "", salaire: "" });
@@ -204,12 +218,18 @@ export default function RHDashboard() {
       setAiAnalysis(null);
       setAiError(null);
       setAiLoading(false);
+      setDeepfakeLoading(false);
+      setDeepfakeError(null);
+      setDeepfakeResult(null);
       return;
     }
     let cancelled = false;
     setAiLoading(true);
     setAiError(null);
     setAiAnalysis(null);
+    setDeepfakeLoading(true);
+    setDeepfakeError(null);
+    setDeepfakeResult(null);
     apiFetch<AIAnalysisPayload>(`/candidatures/${aiSheetCandidature.id}/analyse-ia/`)
       .then((data) => {
         if (!cancelled) setAiAnalysis(data);
@@ -220,10 +240,51 @@ export default function RHDashboard() {
       .finally(() => {
         if (!cancelled) setAiLoading(false);
       });
+
+    runDeepfakeAnalysis(aiSheetCandidature, cancelled);
+
     return () => {
       cancelled = true;
     };
   }, [aiSheetCandidature]);
+
+  const runDeepfakeAnalysis = async (candidature: Candidature, cancelled = false) => {
+    if (!candidature.video) {
+      toast.error("Aucune vidéo disponible pour cette candidature.");
+      if (!cancelled) setDeepfakeLoading(false);
+      return;
+    }
+
+    try {
+      const videoUrl = getMediaUrl(candidature.video);
+      const videoResponse = await fetch(videoUrl);
+      if (!videoResponse.ok) {
+        throw new Error("Impossible de récupérer la vidéo du candidat.");
+      }
+
+      const videoBlob = await videoResponse.blob();
+      const formData = new FormData();
+      formData.append("video", videoBlob, `candidature-${candidature.id}.mp4`);
+
+      const result = await apiFetch<DeepfakeAnalysisResult>("/check-video-deepfake/", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!cancelled) {
+        setDeepfakeResult(result);
+        toast.success("Analyse Deepfake terminée.");
+      }
+    } catch (error: any) {
+      const message = error?.message || "Erreur lors de l'analyse Deepfake.";
+      if (!cancelled) {
+        setDeepfakeError(message);
+        toast.error(message);
+      }
+    } finally {
+      if (!cancelled) setDeepfakeLoading(false);
+    }
+  };
 
   const handleCreate = async () => {
     if (!user) return;
@@ -516,10 +577,12 @@ export default function RHDashboard() {
                         onClick={(e) => {
                           e.stopPropagation();
                           setAiSheetCandidature(c);
+                          setDeepfakeError(null);
+                          setDeepfakeResult(null);
                         }}
                       >
                         <Sparkles className="h-3 w-3 mr-1" />
-                        Analyse IA
+                        Analyse AI
                       </Button>
                       <Select
                         value={c.statut}
@@ -655,6 +718,44 @@ export default function RHDashboard() {
           </SheetHeader>
 
           <div className="mt-6 space-y-6">
+            {aiSheetCandidature && (
+              <Card className="rounded-xl border border-border bg-card shadow-sm">
+                <CardContent className="pt-6 space-y-3">
+                  <h3 className="font-semibold text-sm text-foreground">Détection Deepfake (vidéo)</h3>
+                  {deepfakeLoading && (
+                    <p className="text-sm text-muted-foreground">Analyse des visages en cours...</p>
+                  )}
+
+                  {deepfakeError && (
+                    <div className="rounded-lg border border-destructive/50 bg-destructive/5 px-3 py-2 text-sm text-destructive">
+                      {deepfakeError}
+                    </div>
+                  )}
+
+                  {deepfakeResult && (
+                    <div
+                      className={`rounded-lg border px-4 py-3 text-sm ${
+                        deepfakeResult.status === "Fake"
+                          ? "border-red-500/40 bg-red-500/10"
+                          : "border-emerald-500/40 bg-emerald-500/10"
+                      }`}
+                    >
+                      <p className="font-semibold">
+                        Résultat : {deepfakeResult.status === "Fake" ? "Fake (générée par IA)" : "Real (authentique)"}
+                      </p>
+                      <p className="mt-1">
+                        Confiance : {(deepfakeResult.confidence_score * 100).toFixed(2)}%
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Séquences analysées : {deepfakeResult.sequences_analyzed} | Votes Fake: {deepfakeResult.votes.fake} /
+                        Real: {deepfakeResult.votes.real}
+                      </p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
             {aiLoading && (
               <div className="flex flex-col items-center justify-center gap-3 py-10 text-muted-foreground text-sm">
                 <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />

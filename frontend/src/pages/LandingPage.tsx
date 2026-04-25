@@ -48,7 +48,7 @@ export default function LandingPage() {
               <span style={{ color: "hsl(160, 60%, 55%)" }}>aux opportunités</span>
             </h1>
             <p className="text-lg md:text-xl mb-10 max-w-2xl mx-auto" style={{ color: "hsl(210, 15%, 70%)" }}>
-              RecruPro simplifie le recrutement. Candidats, trouvez votre prochain emploi.
+              HireBot simplifie le recrutement. Candidats, trouvez votre prochain emploi.
               Recruteurs, trouvez les meilleurs profils.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -131,9 +131,9 @@ export default function LandingPage() {
             <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
               <Briefcase className="h-4 w-4 text-primary-foreground" />
             </div>
-            <span className="font-display font-bold text-foreground">RecruPro</span>
+            <span className="font-display font-bold text-foreground">HireBot</span>
           </div>
-          <p className="text-sm text-muted-foreground">© 2026 RecruPro. Tous droits réservés.</p>
+          <p className="text-sm text-muted-foreground">© 2026 HireBot. Tous droits réservés.</p>
         </div>
       </footer>
     </div>
