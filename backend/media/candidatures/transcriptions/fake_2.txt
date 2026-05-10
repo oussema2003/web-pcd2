@@ -1,0 +1,5 @@
+Passionné par les enjeux de la transition écologique, je souhaite mettre mes compétences techniques au service d’une mobilité plus durable et intelligente. Convaincu que la technologie est un levier essentiel pour réduire l’empreinte carbone, je développe des solutions capables de connecter les données de trafic et de pollution en temps réel afin d’optimiser les déplacements.
+
+Mon expertise en développement d’API me permet de créer des systèmes facilitant des choix de trajets plus écologiques, tandis que mes compétences en reconnaissance vocale contribuent à concevoir des interfaces sécurisées et accessibles, favorisant une utilisation mains libres pour les usagers. Soucieux d’un numérique responsable, je conçois également des architectures logicielles optimisées pour une faible consommation énergétique.
+
+Je souhaite ainsi contribuer concrètement à des solutions innovantes qui encouragent des modes de transport plus sûrs, plus intelligents et respectueux de l’environnement.
